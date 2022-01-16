@@ -3,3 +3,4 @@
 
 # production
 /build
+/src/database/key.json
