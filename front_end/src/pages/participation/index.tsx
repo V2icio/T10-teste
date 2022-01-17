@@ -1,39 +1,56 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useState, useEffect } from 'react';
 import {
   Button,
   FormControl,
   Input,
   Stack,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
   Heading,
+  Container,
+  Text,
+  useToast,
 } from '@chakra-ui/react';
-import { ResponsivePie } from '@nivo/pie';
 import ParticipationChart from './participationChart';
+import ParticipationTable from './participationTable';
 
-interface Participation {
-  id?: number;
+import { api } from '../../services/api';
+
+export interface Participation {
+  id?: string;
   firstName: string;
   lastName: string;
   participation: string;
 }
 
 function Participation(): JSX.Element {
+  const toast = useToast();
   const [participationInputValue, setParticipationInputValue] =
     useState<Participation>({
       firstName: '',
       lastName: '',
       participation: '',
     });
-
   const [participationData, setParticipationData] = useState<Participation[]>(
     [],
   );
+  const [submiting, setSubmiting] = useState(false);
+
+  const getParticipations = async (): Promise<void> => {
+    try {
+      const response = await api.get('/participations');
+      let participations: Participation[] = response.data;
+      participations = participations.sort(
+        (a, b) => parseInt(a.participation, 10) - parseInt(b.participation, 10),
+      );
+      setParticipationData(participations);
+    } catch (error) {
+      //
+    }
+  };
+
+  useEffect(() => {
+    getParticipations();
+  }, []);
 
   const handleChange = ({ target }): void => {
     setParticipationInputValue({
@@ -44,12 +61,54 @@ function Participation(): JSX.Element {
 
   const handleSubmit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
-    setParticipationData([...participationData, participationInputValue]);
-    setParticipationInputValue({
-      firstName: '',
-      lastName: '',
-      participation: '',
-    });
+    try {
+      setSubmiting(true);
+
+      if (participationInputValue.id) {
+        await api.put(
+          `/participations/${participationInputValue.id}`,
+          participationInputValue,
+        );
+      } else {
+        const response = await api.post(
+          '/participations',
+          participationInputValue,
+        );
+        participationInputValue.id = response.data.id;
+      }
+
+      let newParticipationData = [
+        ...participationData,
+        participationInputValue,
+      ];
+      newParticipationData = newParticipationData.sort(
+        (a, b) => parseInt(a.participation, 10) - parseInt(b.participation, 10),
+      );
+      setParticipationData(newParticipationData);
+      setParticipationInputValue({
+        firstName: '',
+        lastName: '',
+        participation: '',
+      });
+      toast({
+        title: 'Participation was save.',
+        description: 'Participation data has been saved and added to the list.',
+        status: 'success',
+        duration: 9000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'An error has occurred.',
+        description:
+          'Sorry. An error occurred and the data could not be saved.',
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      setSubmiting(false);
+    }
   };
 
   return (
@@ -100,7 +159,12 @@ function Participation(): JSX.Element {
                 />
               </FormControl>
 
-              <Button type="submit" style={{ flex: 0.1 }} size="lg">
+              <Button
+                type="submit"
+                style={{ flex: 0.1 }}
+                size="lg"
+                isLoading={submiting}
+              >
                 SEND
               </Button>
             </Stack>
@@ -115,66 +179,33 @@ function Participation(): JSX.Element {
         }}
       >
         <div style={{ width: '75%' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              margin: 10,
-            }}
-          >
-            <Heading>Data</Heading>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              margin: 10,
-            }}
-          >
-            Data of participants
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{ margin: 15, width: '50%' }}>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th />
-                    <Th>First name</Th>
-                    <Th>Last name</Th>
-                    <Th textAlign="center">Participation</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {participationData.map((participation, i) => (
-                    <Tr>
-                      <Td>{i}</Td>
-                      <Td>{participation.firstName}</Td>
-                      <Td>{participation.lastName}</Td>
-                      <Td textAlign="center">
-                        {`${participation.participation}%`}
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
+          <Container centerContent mt={5} mb={10}>
+            <Stack textAlign="center" spacing={5}>
+              <Heading>Data</Heading>
+              <Text>Data of participants</Text>
+            </Stack>
+          </Container>
+
+          <Stack direction="row">
+            <div style={{ width: '50%' }}>
+              <ParticipationTable
+                participations={participationData}
+                setParticipations={setParticipationData}
+                setParticipationInputValue={setParticipationInputValue}
+              />
             </div>
-            <div style={{ height: 300, width: '50%' }}>
+            <div style={{ height: 250, width: '50%' }}>
               <ParticipationChart
-                data={participationData.map((participationElement) => {
+                data={participationData.map((participationElement, i) => {
                   return {
-                    id: `${participationElement.firstName} ${participationElement.lastName}`,
+                    id: `${i + 1} - ${participationElement.firstName}`,
                     label: `${participationElement.firstName} ${participationElement.lastName}`,
                     value: parseInt(participationElement.participation, 10),
                   };
                 })}
               />
             </div>
-          </div>
+          </Stack>
         </div>
       </div>
     </div>

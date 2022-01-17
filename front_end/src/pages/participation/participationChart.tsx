@@ -16,7 +16,7 @@ function ParticipationChart({ data }: Props): JSX.Element {
   return (
     <ResponsivePie
       data={data}
-      margin={{ top: 20, right: 0, bottom: 20, left: 0 }}
+      margin={{ top: 20, right: 0, bottom: 20, left: -50 }}
       innerRadius={0.5}
       padAngle={2.5}
       cornerRadius={3}
