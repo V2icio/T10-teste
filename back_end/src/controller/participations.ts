@@ -19,12 +19,12 @@ export default {
       .get();
 
     if (!participationRef.exists) {
-      return res.status(400).send({ error: 'Id provided not found.' });
+      return res.status(400).send({ message: 'Id provided not found.' });
     }
 
     const participation: Participation = <Participation>participationRef.data();
     participation.id = req.params.id;
-    res.send(participation);
+    return res.send(participation);
   },
 
   createParticipation: async (req: Request, res: Response) => {
@@ -34,7 +34,7 @@ export default {
       if (req.body[fieldName] === null || req.body[fieldName] === undefined) {
         return res
           .status(400)
-          .send({ error: `Field ${fieldName} is mandatory.` });
+          .send({ message: `Field ${fieldName} is mandatory.` });
       }
     }
 
@@ -60,7 +60,7 @@ export default {
       .get();
 
     if (!participationRef.exists) {
-      return res.status(400).send({ error: 'Id provided not found.' });
+      return res.status(400).send({ message: 'Id provided not found.' });
     }
 
     const participation: Participation = <Participation>participationRef.data();
@@ -88,7 +88,7 @@ export default {
       .get();
 
     if (!participationRef.exists) {
-      return res.status(400).send({ error: 'Id provided not found.' });
+      return res.status(400).send({ message: 'Id provided not found.' });
     }
     await db.collection('participations').doc(req.params.id).delete();
 
