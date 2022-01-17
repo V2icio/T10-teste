@@ -3,4 +3,4 @@
 
 # production
 /build
-firebase.json
+src/database/firebase.json

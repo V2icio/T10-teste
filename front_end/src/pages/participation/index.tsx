@@ -1,17 +1,8 @@
-/* eslint-disable react/jsx-props-no-spreading */
-import React, { FormEvent, useState, useEffect } from 'react';
-import {
-  Button,
-  FormControl,
-  Input,
-  Stack,
-  Heading,
-  Container,
-  Text,
-  useToast,
-} from '@chakra-ui/react';
-import ParticipationChart from './participationChart';
+import React, { useState, useEffect } from 'react';
+import { Stack, Heading, Container, Text, useToast } from '@chakra-ui/react';
+import ParticipationForm from './participationForm';
 import ParticipationTable from './participationTable';
+import ParticipationChart from './participationChart';
 
 import { api } from '../../services/api';
 
@@ -33,54 +24,46 @@ function Participation(): JSX.Element {
   const [participationData, setParticipationData] = useState<Participation[]>(
     [],
   );
-  const [submiting, setSubmiting] = useState(false);
 
-  const getParticipations = async (): Promise<void> => {
+  const getParticipations = async (): Promise<Participation[]> => {
     try {
       const response = await api.get('/participations');
       let participations: Participation[] = response.data;
       participations = participations.sort(
         (a, b) => parseInt(a.participation, 10) - parseInt(b.participation, 10),
       );
-      setParticipationData(participations);
+      return participations;
     } catch (error) {
-      //
+      return [];
     }
   };
 
   useEffect(() => {
-    getParticipations();
+    let isMounted = true;
+    getParticipations().then((participations) => {
+      if (isMounted) {
+        setParticipationData(participations);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const handleChange = ({ target }): void => {
-    setParticipationInputValue({
-      ...participationInputValue,
-      [target.name]: target.value,
-    });
-  };
-
-  const handleSubmit = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
+  const handleSubmit = async (participation: Participation): Promise<void> => {
     try {
-      setSubmiting(true);
-
-      if (participationInputValue.id) {
+      const participationAux = { ...participation };
+      if (participationAux.id) {
         await api.put(
-          `/participations/${participationInputValue.id}`,
-          participationInputValue,
+          `/participations/${participationAux.id}`,
+          participationAux,
         );
       } else {
-        const response = await api.post(
-          '/participations',
-          participationInputValue,
-        );
-        participationInputValue.id = response.data.id;
+        const response = await api.post('/participations', participation);
+        participationAux.id = response.data.id;
       }
 
-      let newParticipationData = [
-        ...participationData,
-        participationInputValue,
-      ];
+      let newParticipationData = [...participationData, participationAux];
       newParticipationData = newParticipationData.sort(
         (a, b) => parseInt(a.participation, 10) - parseInt(b.participation, 10),
       );
@@ -106,8 +89,6 @@ function Participation(): JSX.Element {
         duration: 9000,
         isClosable: true,
       });
-    } finally {
-      setSubmiting(false);
     }
   };
 
@@ -121,54 +102,11 @@ function Participation(): JSX.Element {
         }}
       >
         <div style={{ width: '75%', padding: 45 }}>
-          <form onSubmit={handleSubmit}>
-            <Stack direction="row" spacing={5}>
-              <FormControl style={{ flex: 0.3 }} isRequired>
-                <Input
-                  name="firstName"
-                  value={participationInputValue.firstName}
-                  onChange={handleChange}
-                  bg="white"
-                  size="lg"
-                  placeholder="First name"
-                />
-              </FormControl>
-
-              <FormControl style={{ flex: 0.3 }} isRequired>
-                <Input
-                  name="lastName"
-                  value={participationInputValue.lastName}
-                  onChange={handleChange}
-                  bg="white"
-                  size="lg"
-                  placeholder="Last name"
-                />
-              </FormControl>
-
-              <FormControl style={{ flex: 0.3 }} isRequired>
-                <Input
-                  name="participation"
-                  value={participationInputValue.participation}
-                  onChange={handleChange}
-                  bg="white"
-                  size="lg"
-                  placeholder="Participation"
-                  type="number"
-                  min={1}
-                  max={100}
-                />
-              </FormControl>
-
-              <Button
-                type="submit"
-                style={{ flex: 0.1 }}
-                size="lg"
-                isLoading={submiting}
-              >
-                SEND
-              </Button>
-            </Stack>
-          </form>
+          <ParticipationForm
+            participationInputValue={participationInputValue}
+            setParticipationInputValue={setParticipationInputValue}
+            handleSubmit={handleSubmit}
+          />
         </div>
       </div>
 

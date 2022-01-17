@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import {
   Button,
   ButtonGroup,
@@ -136,7 +135,7 @@ function ParticipationTable({
           <Th style={styleTest} textAlign="center" />
         </Tr>
       </Thead>
-      <Tbody>
+      <Tbody data-testid="tableBody">
         {participations.map((participation, i) => (
           <Tr key={participation.id}>
             <Td style={styleTest}>{i + 1}</Td>
