@@ -116,7 +116,7 @@ function Participation(): JSX.Element {
           justifyContent: 'center',
         }}
       >
-        <div style={{ width: '75%' }}>
+        <div style={{ width: '75%', paddingBottom: 50 }}>
           <Container centerContent mt={5} mb={10}>
             <Stack textAlign="center" spacing={5}>
               <Heading>Data</Heading>
