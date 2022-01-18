@@ -4,3 +4,4 @@
 # production
 /build
 src/database/firebase.json
+.env
